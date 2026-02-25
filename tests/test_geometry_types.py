@@ -401,12 +401,11 @@ class TestParameterRobustness:
     """Test robustness to different parameter values."""
 
     def test_zero_smooth_iterations(self):
-        """Test with zero smoothing iterations."""
+        """Test with zero smoothing iterations returns original input unchanged."""
         polygon = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
         smoothed = smoothify(polygon, segment_length=1.0, smooth_iterations=0)
 
-        assert smoothed.is_valid
-        # Should be essentially unchanged
+        assert smoothed is polygon
 
     def test_high_smooth_iterations(self):
         """Test with very high smoothing iterations."""

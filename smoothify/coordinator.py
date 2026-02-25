@@ -134,6 +134,9 @@ def smoothify(
         >>> gdf = gpd.read_file("water_bodies.gpkg")
         >>> smoothed_gdf = smoothify(gdf, segment_length=10.0, num_cores=4)
     """  # noqa: E501
+    if smooth_iterations == 0:
+        return geom
+
     if num_cores <= 0:
         num_cores = cpu_count()
     if isinstance(geom, list):
