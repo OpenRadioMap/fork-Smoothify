@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2026-02-25
+
+### Fixed
+- Fixed `TopologyException` crash on thin/elongated polygons by validating smoothed variants before union
+- Fixed crash when hole subtraction splits a polygon into a MultiPolygon (e.g. tiny holes relative to segment length)
+
 ## [0.2.0] - 2026-02-25
 
 ### Fixed

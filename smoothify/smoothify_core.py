@@ -306,6 +306,8 @@ def _smoothify_geometry(
         )
         geom_iterations.append(smoothed)
 
+    geom_iterations = [make_valid(g) for g in geom_iterations]
+
     dissolved_poly = make_valid(unary_union(geom_iterations)).simplify(
         tolerance=segment_length / 5,
         preserve_topology=True,

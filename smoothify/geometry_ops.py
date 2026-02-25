@@ -49,7 +49,7 @@ def _smoothify_multipolygon(
     for polygon in polygons:
         assert isinstance(polygon, Polygon)
 
-    polygons = [
+    smoothed = [
         _smoothify_polygon(
             geom=polygon,
             segment_length=segment_length,
@@ -59,7 +59,16 @@ def _smoothify_multipolygon(
         )
         for polygon in polygons
     ]
-    return MultiPolygon(polygons)
+
+    # Flatten any MultiPolygons from hole subtraction
+    flattened = []
+    for geom_result in smoothed:
+        if isinstance(geom_result, MultiPolygon):
+            flattened.extend(geom_result.geoms)
+        else:
+            flattened.append(geom_result)
+
+    return MultiPolygon(flattened)
 
 
 def _smoothify_linearing(
@@ -105,12 +114,13 @@ def _smoothify_polygon(
     smooth_iterations: int = 3,
     preserve_area: bool = True,
     area_tolerance: float = 0.01,
-) -> Polygon:
+) -> Polygon | MultiPolygon:
     """Smooth a Polygon while preserving interior holes.
 
     Smooths the exterior shell and each interior hole independently, then
     recombines them. This approach prevents artifacts at hole boundaries and
-    maintains proper polygon topology."""
+    maintains proper polygon topology. May return a MultiPolygon if hole
+    subtraction splits the polygon."""
 
     holes, filled_polygon = _extract_and_fill_holes(geom)
 
@@ -147,10 +157,6 @@ def _smoothify_polygon(
                 if not hole_inside.is_empty:
                     smooth_polygon = smooth_polygon.difference(hole_inside)
 
-    if not isinstance(smooth_polygon, Polygon):
-        raise ValueError(
-            f"Expected output of smoothify_geometry to be Polygon, got {type(smooth_polygon)}"  # noqa: E501
-        )
     return smooth_polygon
 
 
