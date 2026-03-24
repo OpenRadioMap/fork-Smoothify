@@ -52,7 +52,7 @@ def _chaikin_corner_cutting(
         # Vectorized smoothing at 1/4 and 3/4 positions
         # Pre-allocate result array for better performance
         n_new_points = len(p0) * 2
-        points = np.empty((n_new_points, 2), dtype=np.float64)
+        points = np.empty((n_new_points, points.shape[1]), dtype=np.float64)
         points[0::2] = 0.75 * p0 + 0.25 * p1  # q points
         points[1::2] = 0.25 * p0 + 0.75 * p1  # r points
 
@@ -306,17 +306,26 @@ def _smoothify_geometry(
         )
         geom_iterations.append(smoothed)
 
-    geom_iterations = [make_valid(g) for g in geom_iterations]
+    if isinstance(geom, Polygon):
+        geom_iterations = [make_valid(g) for g in geom_iterations]
 
-    dissolved_poly = make_valid(unary_union(geom_iterations)).simplify(
-        tolerance=segment_length / 5,
-        preserve_topology=True,
-    )
+        dissolved_poly = make_valid(unary_union(geom_iterations)).simplify(
+            tolerance=segment_length / 5,
+            preserve_topology=True,
+        )
 
-    # If the union is a MultiPolygon, take the largest geometry
-    if isinstance(dissolved_poly, MultiPolygon):
-        largest_geom = max(dissolved_poly.geoms, key=lambda x: x.area)
-        dissolved_poly = largest_geom
+        # If the union is a MultiPolygon, take the largest geometry
+        if isinstance(dissolved_poly, MultiPolygon):
+            largest_geom = max(dissolved_poly.geoms, key=lambda x: x.area)
+            dissolved_poly = largest_geom
+    else:
+        # LineStrings: skip make_valid/unary_union — self-intersecting lines
+        # are geometrically valid, and unary_union would split them at
+        # crossing points into a MultiLineString
+        dissolved_poly = geom_iterations[0].simplify(
+            tolerance=segment_length / 5,
+            preserve_topology=True,
+        )
 
     assert isinstance(dissolved_poly, (Polygon, LineString)), (
         f"Resulting geometry must be Polygon or LineString. Got {type(dissolved_poly)}."
