@@ -177,3 +177,4 @@ private test data/*
 *.gpkg-wal
 *.DS_Store
 test data/output/*
+examples/Water_Smoothed.gpkg
