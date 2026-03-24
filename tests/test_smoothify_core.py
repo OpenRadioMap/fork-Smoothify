@@ -143,6 +143,26 @@ class TestSmoothifyGeometry:
         assert smoothed.coords[0] == line.coords[0]
         assert smoothed.coords[-1] == line.coords[-1]
 
+    def test_smoothify_self_intersecting_linestring(self):
+        """Test that a self-intersecting LineString is smoothed without error.
+
+        Lines that cross themselves are geometrically valid. The smoothing
+        pipeline must not split them into a MultiLineString via make_valid
+        or unary_union, which node lines at self-intersection points.
+        """
+        # S-curve that crosses itself — triggers unary_union splitting
+        line = LineString([
+            (0, 0), (2, 0), (3, 0), (4, 1), (3, 2), (2, 2), (1, 1),
+            (2, 0.5), (3, 0.5), (4, 0), (5, 0), (7, 0),
+        ])
+        assert not line.is_simple  # confirm it self-intersects
+
+        smoothed = _smoothify_geometry(
+            line, segment_length=0.5, smooth_iterations=3, preserve_area=False
+        )
+
+        assert isinstance(smoothed, LineString)
+
     def test_preserve_area_option(self):
         """Test that preserve_area option works."""
         square = Polygon([(0, 0), (100, 0), (100, 100), (0, 100)])
